@@ -11,17 +11,16 @@ pkgdesc='JACK Audio Connection Kit plugin for version ${basepkgname} ${basepkgve
 arch=('i686' 'x86_64')
 license=('GPL')
 depends=('libao' 'jack' 'libsamplerate')
-makedepends=('git')
+makedepends=('git' 'patch')
 source=("http://downloads.xiph.org/releases/ao/libao-1.2.0.tar.gz"
         "git://gitorious.org/aojackplg/libao-jack-plugin.git")
 sha1sums=('6b1d2c6a2e388e3bb6ebea158d51afef18aacc56'
 	  SKIP)
 build() {
         cd "${srcdir}/${basepkgname}-${basepkgver}"
-	cp -a ../libao-jack-plugin/src/plugins/jack src/plugins/
-	patch -p1 < ../libao-jack-plugin/patch/0001-jack-plugin.patch || return 1
-	patch -p1 < ../libao-jack-plugin/patch/0002-rename-libjack.patch || return 1
-        #git apply ${srcdir}/0001-jack-plugin.patch || return 1
+	cp -a ${srcdir}/libao-jack-plugin/src/plugins/jack src/plugins/
+	patch -p1 < ${srcdir}/libao-jack-plugin/patch/0001-jack-plugin.patch || return 1
+	patch -p1 < ${srcdir}/libao-jack-plugin/patch/0002-rename-libjack.patch || return 1
 
         aclocal
         automake --add-missing
