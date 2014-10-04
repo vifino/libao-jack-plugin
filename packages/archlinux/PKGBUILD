@@ -1,0 +1,46 @@
+# $Id$
+# Maintainer: Laurent Pelecq <lpelecq-archlinux@circoise.eu>
+
+basepkgname=libao
+basepkgver=1.2.0
+pkgname=libao-jack-plugin
+pkgver=${basepkgver}_001
+pkgrel=1
+pkgdesc='JACK Audio Connection Kit plugin for version ${basepkgname} ${basepkgver}'
+#url='http://xiph.org/ao/'
+arch=('i686' 'x86_64')
+license=('GPL')
+depends=('libao' 'jack' 'libsamplerate')
+makedepends=('git')
+source=("http://downloads.xiph.org/releases/ao/libao-1.2.0.tar.gz"
+        "git://gitorious.org/aojackplg/libao-jack-plugin.git")
+sha1sums=('6b1d2c6a2e388e3bb6ebea158d51afef18aacc56'
+	  SKIP)
+build() {
+        cd "${srcdir}/${basepkgname}-${basepkgver}"
+	cp -a ../libao-jack-plugin/src/plugins/jack src/plugins/
+	patch -p1 < ../libao-jack-plugin/patch/0001-jack-plugin.patch || return 1
+	patch -p1 < ../libao-jack-plugin/patch/0002-rename-libjack.patch || return 1
+        #git apply ${srcdir}/0001-jack-plugin.patch || return 1
+
+        aclocal
+        automake --add-missing
+        autoconf
+
+        ./configure \
+                --prefix=/usr \
+		--disable-alsa \
+		--disable-oss \
+		--disable-pulse \
+		--disable-arts \
+		--disable-esd \
+		--disable-roar
+
+        make
+}
+
+package() {
+	cd "${srcdir}/${basepkgname}-${basepkgver}/src/plugins/jack"
+        make DESTDIR="${pkgdir}" install
+	mv "${pkgdir}/usr/lib/ao/plugins-4/libjackdriver.so" "${pkgdir}/usr/lib/ao/plugins-4/libjack.so"
+}
