@@ -1,0 +1,88 @@
+diff --git a/configure.ac b/configure.ac
+index 67a06f8..6d4d2b0 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -271,10 +271,10 @@ AM_CONDITIONAL(HAVE_OSS,test "${have_oss}" = "yes")
+ 
+ dnl Check for ALSA 0.9/1.0
+ have_alsa="no";
+-AC_ARG_ENABLE(alsa, [  --enable-alsa         include alsa 0.9/1.0 output plugin ],
++AC_ARG_ENABLE(alsa, [  --enable-alsa           include alsa 0.9/1.0 output plugin ],
+ [ BUILD_ALSA="$enableval" ],[ BUILD_ALSA="yes" ])
+ AC_ARG_ENABLE(alsa-mmap,
+-   [  --enable-alsa-mmap          use mmio with alsa ],
++   [  --enable-alsa-mmap      use mmio with alsa ],
+    [ BUILD_ALSAMMIO="$enableval" ],[ BUILD_ALSAMMIO="no" ])
+ 
+ if test "$BUILD_ALSA" = "yes"; then
+@@ -300,7 +300,7 @@ AC_SUBST(ALSA_LIBS)
+ dnl Decide whether we need to enable the workaround for broken OSS APIs
+ dnl such as the OSS emulation in ALSA.
+ 
+-AC_ARG_ENABLE(broken-oss, [  --enable-broken-oss           workaround for some OSS drivers (see README for details)],,
++AC_ARG_ENABLE(broken-oss, [  --enable-broken-oss     workaround for some OSS drivers (see README for details)],,
+ if test "x$have_alsa" = "xyes" -o "x$have_alsa" = "xyes"; then
+    enable_broken_oss="yes"
+ fi)
+@@ -445,7 +445,7 @@ AC_SUBST(NAS_LIBS)
+ 
+ dnl Check for pulse
+ 
+-AC_ARG_ENABLE(pulse, [  --enable-pulse       include PulseAudio output plugin ],
++AC_ARG_ENABLE(pulse, [  --enable-pulse          include PulseAudio output plugin ],
+ [ BUILD_PULSE="$enableval" ],[ BUILD_PULSE="yes" ])
+ 
+ have_pulse="no";
+@@ -460,11 +460,33 @@ AM_CONDITIONAL(HAVE_PULSE,test "x$have_pulse" = xyes)
+ dnl Orphaned driver.  We'll probably dump it soon.
+ AM_CONDITIONAL(HAVE_SOLARIS,test "x$have_solaris" = xyes)
+ 
++dnl Check for JACK 0.9/1.0
++AC_ARG_ENABLE(jack, [  --enable-jack           include JACK Audio Connection Kit output plugin ],
++[ BUILD_JACK="$enableval" ],[ BUILD_JACK="yes" ])
++
++JACK_CFLAGS=""
++JACK_LDFLAGS=""
++JACK_LIBS=""
++if test "$BUILD_JACK" = "yes"; then
++   PKG_CHECK_MODULES([JACK],[jack samplerate], [have_jack=yes], [have_jack=no])
++   if test x$have_jack = xyes; then
++      JACK_CFLAGS="$JACK_CFLAGS"
++      JACK_LIBS="$JACK_LIBS -lpthread"
++   fi
++else
++   have_jack=no
++fi
++AC_SUBST(JACK_CFLAGS)
++AC_SUBST(JACK_LDFLAGS)
++AC_SUBST(JACK_LIBS)
++
++AM_CONDITIONAL(HAVE_JACK,test "x$have_jack" = xyes)
++
+ dnl Plugins get special LDFLAGS
+ AC_SUBST(PLUGIN_LDFLAGS)
+ 
+ 
+-AC_OUTPUT([Makefile src/Makefile doc/Makefile include/Makefile include/ao/Makefile include/ao/os_types.h src/plugins/Makefile src/plugins/esd/Makefile src/plugins/oss/Makefile src/plugins/alsa/Makefile src/plugins/sun/Makefile src/plugins/irix/Makefile src/plugins/arts/Makefile src/plugins/macosx/Makefile src/plugins/nas/Makefile src/plugins/pulse/Makefile src/plugins/sndio/Makefile src/plugins/roar/Makefile ao.pc])
++AC_OUTPUT([Makefile src/Makefile doc/Makefile include/Makefile include/ao/Makefile include/ao/os_types.h src/plugins/Makefile src/plugins/esd/Makefile src/plugins/oss/Makefile src/plugins/alsa/Makefile src/plugins/sun/Makefile src/plugins/irix/Makefile src/plugins/arts/Makefile src/plugins/macosx/Makefile src/plugins/nas/Makefile src/plugins/pulse/Makefile src/plugins/sndio/Makefile src/plugins/roar/Makefile src/plugins/jack/Makefile ao.pc])
+ 
+ AS_AC_EXPAND(LIBDIR, ${libdir})
+ AS_AC_EXPAND(INCLUDEDIR, ${includedir})
+@@ -495,6 +517,7 @@ AC_MSG_RESULT([
+     SNDIO live output: ........... ${have_sndio}
+     SUN live output: ............. ${have_sun}
+     Windows WMM live output: ..... ${have_wmm}
++    JACK Audio Connection Kit: ... ${have_jack}
+ 
+   Installation paths:
+ 
+diff --git a/src/plugins/Makefile.am b/src/plugins/Makefile.am
+index 1af2303..19ac9fd 100644
+--- a/src/plugins/Makefile.am
++++ b/src/plugins/Makefile.am
+@@ -1,4 +1,4 @@
+ ## Process this file with automake to produce Makefile.in
+ 
+ AUTOMAKE_OPTIONS = foreign
+-SUBDIRS = oss esd arts alsa sun irix macosx nas pulse sndio roar
++SUBDIRS = oss esd arts alsa sun irix macosx nas pulse sndio roar jack
